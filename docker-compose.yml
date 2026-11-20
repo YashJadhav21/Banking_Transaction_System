@@ -1,0 +1,42 @@
+# One-command setup:  docker compose up --build
+#   PostgreSQL -> localhost:${POSTGRES_PORT:-5432}
+#   Backend    -> http://localhost:${BACKEND_PORT:-8080}  (Swagger UI: /swagger-ui.html)
+# Values can be overridden in a .env file (see .env.example).
+# The frontend service will be added once the UI exists.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-banking}
+      POSTGRES_USER: ${POSTGRES_USER:-banking}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-banking}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-banking}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-banking}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-banking}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-25}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:

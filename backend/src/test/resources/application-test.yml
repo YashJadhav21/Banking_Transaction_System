@@ -1,0 +1,9 @@
+# Tests get a real PostgreSQL from Testcontainers (see TestcontainersConfiguration).
+# Only the schema is migrated; each test creates exactly the rows it needs.
+spring:
+  flyway:
+    locations: classpath:db/migration
+  datasource:
+    hikari:
+      maximum-pool-size: 25
+      minimum-idle: 2

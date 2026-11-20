@@ -1,0 +1,23 @@
+# --- Assignment brief (company material, not part of the submission) ---
+Assignment_*.pdf
+
+# --- Environment ---
+.env
+
+# --- Java / Maven ---
+target/
+*.class
+*.log
+logs/
+
+# --- Node / frontend ---
+node_modules/
+dist/
+.vite/
+
+# --- IDE / OS ---
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db

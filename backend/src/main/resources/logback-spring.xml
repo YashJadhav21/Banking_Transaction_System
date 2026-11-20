@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Structured JSON logs (one JSON object per line). Values put into the SLF4J MDC
+  (transactionId, accountId, operation, ...) appear as top-level JSON fields.
+  Use the "dev" profile for human-readable console output while developing.
+-->
+<configuration>
+    <springProperty scope="context" name="appName" source="spring.application.name"/>
+
+    <springProfile name="!dev">
+        <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <customFields>{"app":"${appName}"}</customFields>
+            </encoder>
+        </appender>
+
+        <!-- Async so logging never becomes the bottleneck at 50k transactions.
+             discardingThreshold=0 keeps INFO/DEBUG events instead of dropping them. -->
+        <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+            <appender-ref ref="JSON_CONSOLE"/>
+            <queueSize>8192</queueSize>
+            <discardingThreshold>0</discardingThreshold>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="ASYNC"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="dev">
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} txn=%X{transactionId:-} - %msg%n</pattern>
+            </encoder>
+        </appender>
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+</configuration>

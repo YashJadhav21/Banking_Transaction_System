@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: banking-transaction-system
+
+  # Defaults target the docker-compose PostgreSQL published on localhost.
+  # Inside compose they are overridden with SPRING_DATASOURCE_* env vars.
+  datasource:
+    url: jdbc:postgresql://localhost:5432/banking
+    username: banking
+    password: banking
+    hikari:
+      pool-name: banking-pool
+      # Must be >= the largest worker count (20) so the performance runs measure
+      # the database, not threads queuing for a connection. A fixed-size pool
+      # (min = max) avoids connection churn skewing timings.
+      maximum-pool-size: ${DB_POOL_SIZE:25}
+      minimum-idle: ${DB_POOL_SIZE:25}
+      connection-timeout: 10000
+
+  flyway:
+    # db/migration = schema; db/seed = demo data (tests use migration only).
+    locations: classpath:db/migration,classpath:db/seed
+
+server:
+  port: 8080
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
