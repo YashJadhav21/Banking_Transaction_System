@@ -10,9 +10,9 @@
 --   * Timestamps are TIMESTAMPTZ (stored in UTC).
 --
 -- Status semantics (see docs/design-note.md once written)
---   PENDING   row inserted inside the monetary DB transaction; never visible
---             as committed unless processing crashes mid-way (should not happen
---             because the insert is rolled back with the rest of the work).
+--   PENDING   reserved for a future asynchronous mode. The current engine
+--             processes each request in one DB transaction and writes only
+--             final statuses, so it never stores PENDING.
 --   SUCCESS   money moved and committed.
 --   REJECTED  a business rule refused it (invalid amount, unknown/inactive
 --             account, insufficient balance, same-account transfer).

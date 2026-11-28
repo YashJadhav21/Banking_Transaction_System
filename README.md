@@ -2,7 +2,7 @@
 
 A multi-threaded Java transaction engine for deposits, withdrawals and transfers that stays correct under concurrent load, never processes a transaction twice, and leaves a complete audit trail.
 
-> **Status:** work in progress. Project scaffold, Docker setup and database schema are done; the transaction engine is next. See [Roadmap](#roadmap).
+> **Status:** work in progress. The transaction engine (deposit, withdrawal, transfer with locking, idempotency and failure recording) and REST API are done; the 50,000-transaction simulator is next. See [Roadmap](#roadmap).
 
 ## Tech stack
 
@@ -100,17 +100,51 @@ Highlights:
 
 Demo seed: 200 customers, 1,000 accounts (`ACC000001`–`ACC001000`), every 50th account inactive.
 
+## API
+
+All endpoints are also browsable in Swagger UI (`/swagger-ui.html`).
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/api/transactions` | Process a deposit, withdrawal or transfer |
+| `GET` | `/api/transactions/{transactionId}` | Stored transaction with status and failure reason |
+| `GET` | `/api/accounts/{accountId}` | Account and current balance |
+
+Example (same shape as the assignment's sample transaction):
+
+```bash
+curl -X POST http://localhost:8080/api/transactions \
+  -H "Content-Type: application/json" \
+  -d '{"transactionId":"TXN100234","sourceAccount":"ACC000001","destinationAccount":"ACC000004","amount":12500.00,"type":"TRANSFER"}'
+```
+
+```json
+{"transactionId":"TXN100234","status":"SUCCESS","errorCategory":null,"message":"Transaction completed successfully","durationMs":80.720}
+```
+
+| HTTP | Meaning |
+|---|---|
+| 200 | `SUCCESS` - money moved and committed |
+| 409 | `REJECTED` / `DUPLICATE_TRANSACTION` - id already processed, no money moved |
+| 422 | `REJECTED` - business rule (invalid amount, unknown/inactive account, insufficient balance) |
+| 503 | `FAILED` - technical problem (lock conflict after retries, database error) |
+| 400 | Malformed request (missing field, invalid JSON) - not stored |
+
+How it works - transaction boundaries, locking, idempotency, status mapping - is explained in the [design note](docs/design-note.md).
+
 ## Roadmap
 
 - [x] Project scaffold, Docker Compose, Maven wrapper
 - [x] Database schema, constraints, indexes, seed data, ER diagram
 - [x] Schema constraint tests (Testcontainers)
-- [ ] Deposit / withdrawal / transfer service with validation and custom exceptions
-- [ ] Pessimistic locking with deterministic lock order, idempotency, failure recording
+- [x] Deposit / withdrawal / transfer service with validation and custom exceptions
+- [x] Pessimistic locking with deterministic lock order, idempotency, failure recording
 - [ ] Workload simulator (50,000+ transactions) with 1 / 5 / 10 / 20 workers
-- [ ] Concurrency, duplicate and rollback tests
-- [ ] Structured logging with MDC
+- [x] Concurrency and duplicate tests (mandatory ₹10,000 scenario x50, opposite transfers, concurrent duplicates)
+- [ ] Rollback-on-failure test (fault injection mid-transfer)
+- [x] Structured JSON logging with MDC and account masking
 - [ ] Reporting SQL and EXPLAIN ANALYZE analysis
 - [ ] Performance results and analysis
 - [ ] React dashboard
-- [ ] Design note and architecture diagram
+- [x] Design note (transaction boundaries, locking, idempotency)
+- [ ] Architecture diagram

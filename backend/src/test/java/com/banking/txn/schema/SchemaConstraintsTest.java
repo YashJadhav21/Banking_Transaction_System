@@ -1,16 +1,11 @@
 package com.banking.txn.schema;
 
-import com.banking.txn.TestcontainersConfiguration;
+import com.banking.txn.IntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -23,14 +18,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Verifies that the database itself enforces the core invariants, independent of
  * application code. Each test runs in a transaction that is rolled back afterwards.
  */
-@SpringBootTest
-@ActiveProfiles("test")
-@Import(TestcontainersConfiguration.class)
 @Transactional
-class SchemaConstraintsTest {
-
-    @Autowired
-    private JdbcTemplate jdbc;
+class SchemaConstraintsTest extends IntegrationTest {
 
     private long customerId;
 
